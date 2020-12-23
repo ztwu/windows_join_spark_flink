@@ -1,8 +1,10 @@
 package com.iflytek.scala.spark.hlchange
 
-import org.apache.spark.sql.{Row, SparkSession}
+import org.apache.spark.sql.{Encoders, Row, SparkSession}
 import org.apache.spark.sql.types.{ArrayType, StringType, StructType}
 import org.apache.spark.sql.functions._
+
+case class Entity(userID:String, movieID:String, rating:Int)
 
 object columnsdemo {
 
@@ -10,6 +12,7 @@ object columnsdemo {
 
     val spark = SparkSession.builder().appName(this.getClass.getSimpleName).master("local[3]").getOrCreate()
     import spark.implicits._
+    import org.apache.spark.sql.functions._
 
     /**DataFrame 数据格式:每个用户对每部电影的评分 userID 用户ID,movieID 电影ID,rating评分 */
     val df=spark.sparkContext.parallelize(Array(
@@ -21,6 +24,7 @@ object columnsdemo {
       (18,1401,3),
       (18,399,1)
     )).toDF("userID","movieID","rating")
+    df.map({x=>Entity(x.getString(0),x.getString(1),x.getInt(2))})
     /** pivot 多行转多列*/
     val resultDF = df.groupBy($"userID").pivot("movieID").sum("rating").na.fill(-1)
     /**结果*/
