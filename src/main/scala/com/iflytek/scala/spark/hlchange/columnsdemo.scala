@@ -24,7 +24,13 @@ object columnsdemo {
       (18,1401,3),
       (18,399,1)
     )).toDF("userID","movieID","rating")
-    df.map({x=>Entity(x.getString(0),x.getString(1),x.getInt(2))})
+    df
+//      .map({x=>Entity(x.getString(0),x.getString(1),x.getInt(2))})
+      .map(x=>{
+        println(x)
+        (x.getString(0))
+      })
+
     /** pivot 多行转多列*/
     val resultDF = df.groupBy($"userID").pivot("movieID").sum("rating").na.fill(-1)
     /**结果*/
