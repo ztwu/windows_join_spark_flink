@@ -15,8 +15,8 @@ object structurewindowdemo {
     import org.apache.spark.sql.functions._
     val line = spark.readStream
       .format("socket")
-      .option("host", "hadoop102")
-      .option("port", 10001)
+      .option("host", "localhost")
+      .option("port", 9000)
       .option("includeTimestamp", true)
       .load() //给产生的数据自动添加时间戳
       .as[(String, Timestamp)]
@@ -25,7 +25,7 @@ object structurewindowdemo {
       }
       .toDF("word", "ts")
       .groupBy(
-        window($"ts", "4 minutes", "2 minutes"),
+        window($"ts", "4 minutes", "4 minutes"),
         $"word").count()
 
     line.writeStream
