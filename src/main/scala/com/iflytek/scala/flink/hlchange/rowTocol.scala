@@ -1,23 +1,21 @@
 package com.iflytek.scala.flink.hlchange
 
-import java.text.SimpleDateFormat
 import java.util.Date
+import java.text.SimpleDateFormat
 
 import org.apache.flink.api.common.functions.ReduceFunction
 import org.apache.flink.api.scala._
-import org.apache.flink.streaming.api.TimeCharacteristic
-import org.apache.flink.streaming.api.scala.StreamExecutionEnvironment
-import org.apache.flink.streaming.api.windowing.assigners.{TumblingEventTimeWindows, TumblingProcessingTimeWindows}
-import org.apache.flink.streaming.api.windowing.time.Time
+import org.apache.flink.core.fs.FileSystem
 
-object hldemo01 {
+object rowTocol {
 
   def main(args: Array[String]): Unit = {
-    val env = StreamExecutionEnvironment.getExecutionEnvironment
+    val env = ExecutionEnvironment.getExecutionEnvironment
     env.setParallelism(1)
+
     val data = Array(("joinroom","001",10L,20L,10L,10L),("waitformic","001",10L,20L,10L,10L))
-    val datastream = env.fromCollection(data)
-    val ttstream= datastream
+    val dataset = env.fromCollection(data)
+    val tts= dataset
       .map(m=>{
         val actype=m._1
         var joinroom_uv=0L
@@ -29,16 +27,14 @@ object hldemo01 {
         if(actype.equals("controlmic"))controlmic_uv=m._3
         if(actype.equals("exitroom"))exitroom_uv=m._3
 
-        println((m._2,joinroom_uv,waitformic_uv,controlmic_uv,exitroom_uv))
         (m._2,joinroom_uv,waitformic_uv,controlmic_uv,exitroom_uv)
+
       })
-      .keyBy(0)
-//      .window(TumblingProcessingTimeWindows.of(Time.seconds(10)))
+      .groupBy(0)
       .reduce(new ReduceFunction[Tuple5[String,Long,Long,Long,Long]]() {
 
         def reduce(value1: Tuple5[String,Long,Long,Long,Long],
                    value2: Tuple5[String,Long,Long,Long,Long]): Tuple5[String,Long,Long,Long,Long] = {
-          println(value1,value2)
           return new Tuple5[String,Long,Long,Long,Long](value1._1, value1._2 + value2._2,value1._3+value2._3,value1._4+value2._4,value1._5+value2._5)
         }
 
@@ -58,7 +54,9 @@ object hldemo01 {
           "\"}"
         jsonStr
       })
-    ttstream.print()
+    tts.print()
+    tts.writeAsText("test.txt",FileSystem.WriteMode.OVERWRITE)
+
     env.execute()
   }
 
