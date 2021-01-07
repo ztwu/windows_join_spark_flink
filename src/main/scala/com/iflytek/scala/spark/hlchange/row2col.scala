@@ -31,6 +31,9 @@ object row2col {
       "from temp group by `年月`"
     val df = spark.sql(sql)
     df.show()
+    df.foreachPartition(x=>{
+      x.foreach(println)
+    })
   }
 
 }
